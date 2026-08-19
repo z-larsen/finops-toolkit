@@ -14,12 +14,12 @@ Allocate Azure cost to the teams, products, and cost centers that own it — the
 
 ## When to use this skill
 
-Use it when the user mentions showback, chargeback, allocation, cost centers, "who owns this spend", splitting shared costs, or building a tag strategy for accountability. For raw tag coverage numbers, run the `finops-multitool` scans first (`scan_tag_inventory`, `scan_tag_recommendations`, `scan_cost_by_tag`) and bring the results here to design the model.
+Use it when the user mentions showback, chargeback, allocation, cost centers, "who owns this spend", splitting shared costs, or building a tag strategy for accountability. For raw tag coverage numbers, run the `finops-multitool` scans first (`run_scan` with `tag_inventory`, `run_scan` with `tag_recommendations`, `run_cost_scan` with `cost_by_tag`) and bring the results here to design the model.
 
 ## Allocation readiness checklist
 
-1. **Coverage** — what % of cost carries the allocation tag(s)? Below ~95% means material spend is unallocated. Use `scan_tag_inventory`.
-2. **Consistency** — no casing or spelling drift in tag keys/values (`CostCenter` vs `costcenter`, `managed_by` vs `managedBy`). Use `scan_tag_recommendations`.
+1. **Coverage** — what % of cost carries the allocation tag(s)? Below ~95% means material spend is unallocated. Use `run_scan` with `tag_inventory`.
+2. **Consistency** — no casing or spelling drift in tag keys/values (`CostCenter` vs `costcenter`, `managed_by` vs `managedBy`). Use `run_scan` with `tag_recommendations`.
 3. **Cost dimension** — the allocation tag must be enabled as a cost-allocation dimension in Cost Management, or tag-dimensioned cost data will be empty even when the tags exist.
 4. **Inheritance** — resources that can't be tagged directly (or are missed) should inherit from the resource group via Azure Policy. See the `azure-policy-governance` skill.
 

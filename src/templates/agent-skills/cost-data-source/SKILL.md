@@ -19,11 +19,11 @@ This skill decides hub vs API so cost scans stay fast and the session stays inte
 
 This routing applies **only** to the spend-breakdown tools that read from a hub:
 
-- `scan_cost_data` (current month actuals per subscription)
-- `scan_resource_costs` (top resources by cost)
-- `scan_cost_by_tag` (spend by tag key/value)
+- `run_cost_scan` with `cost_data` (current month actuals per subscription)
+- `run_cost_scan` with `resource_costs` (top resources by cost)
+- `run_cost_scan` with `cost_by_tag` (spend by tag key/value)
 
-All other cost-family tools — `scan_cost_trend`, `scan_budget_status`, `scan_anomaly_alerts`, `scan_reservation_advice`, `scan_commitment_utilization`, `scan_savings_realized` — are **not** derivable from cost exports and always run on the live API. Governance and optimization tools are unaffected.
+All other cost-family tools — `run_scan` with `cost_trend`, `run_scan` with `budget_status`, `run_scan` with `anomaly_alerts`, `run_scan` with `reservation_advice`, `run_scan` with `commitment_utilization`, `run_scan` with `savings_realized` — are **not** derivable from cost exports and always run on the live API. Governance and optimization tools are unaffected.
 
 ## Protocol: detect first, then decide
 

@@ -138,9 +138,33 @@ try {
     # -----------------------------------------------------------------
     $r = Invoke-Rpc -Proc $proc -Json '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
     $toolCount = @($r.result.tools).Count
-    Write-TestResult "tools/list returns 40 tools" ($toolCount -eq 40) "got: $toolCount"
+    Write-TestResult "tools/list returns 13 tools" ($toolCount -eq 13) "got: $toolCount"
     $hasSchema = @($r.result.tools | Where-Object { $_.inputSchema.type -eq 'object' }).Count -eq $toolCount
     Write-TestResult 'every tool has an object inputSchema' $hasSchema
+
+    $names = @($r.result.tools | ForEach-Object { $_.name })
+    $routers = @('run_scan', 'run_cost_scan', 'remediate', 'powerbi')
+    Write-TestResult 'advertises the four routers' (@($routers | Where-Object { $_ -in $names }).Count -eq 4) "got: $($names -join ', ')"
+
+    $runScan = $r.result.tools | Where-Object { $_.name -eq 'run_scan' }
+    Write-TestResult 'run_scan enumerates 22 scans' (@($runScan.inputSchema.properties.scan.enum).Count -eq 22) "got: $(@($runScan.inputSchema.properties.scan.enum).Count)"
+    Write-TestResult 'run_scan requires the scan argument' ('scan' -in @($runScan.inputSchema.required))
+
+    # The 40 registry tools must no longer be advertised individually.
+    Write-TestResult 'individual scans are no longer advertised' ('scan_idle_vms' -notin $names)
+
+    # -----------------------------------------------------------------
+    # 2b. router argument validation
+    # -----------------------------------------------------------------
+    $r = Invoke-Rpc -Proc $proc -Json '{"jsonrpc":"2.0","id":20,"method":"tools/call","params":{"name":"run_scan","arguments":{}}}'
+    Write-TestResult 'run_scan without scan returns an error' ($r.result.isError -eq $true) "got: $($r.result.content[0].text)"
+
+    $r = Invoke-Rpc -Proc $proc -Json '{"jsonrpc":"2.0","id":21,"method":"tools/call","params":{"name":"run_scan","arguments":{"scan":"not_a_scan"}}}'
+    $msg = [string]$r.result.content[0].text
+    Write-TestResult 'run_scan with an unknown scan lists valid values' (($r.result.isError -eq $true) -and ($msg -match 'orphaned_resources')) "got: $msg"
+
+    $r = Invoke-Rpc -Proc $proc -Json '{"jsonrpc":"2.0","id":22,"method":"tools/call","params":{"name":"remediate","arguments":{"resourceId":"/subscriptions/x"}}}'
+    Write-TestResult 'remediate without action returns an error' ($r.result.isError -eq $true) "got: $($r.result.content[0].text)"
 
     # -----------------------------------------------------------------
     # 3. resources/list + resources/read

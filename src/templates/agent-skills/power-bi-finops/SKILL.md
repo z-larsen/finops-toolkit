@@ -63,5 +63,5 @@ Setup steps: open the `.pbit` template → supply the data-source parameters (cl
 ## Hand-offs
 
 - Need the underlying numbers or a KQL query → `finops-toolkit` skill.
-- Need a live read-only scan to seed a visual → `finops-multitool` MCP tools (`scan_cost_trend`, `scan_resource_costs`, `scan_tag_inventory`).
+- Need a live read-only scan to seed a visual → `finops-multitool` MCP tools (`run_scan` with `cost_trend`, `run_cost_scan` with `resource_costs`, `run_scan` with `tag_inventory`).
 - Need an executive narrative around the visuals → `finops-reporting` skill.

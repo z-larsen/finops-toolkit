@@ -15,7 +15,7 @@ Detection tells you a cost moved; this skill tells you *why* and what to do. It'
 
 ## When to use this skill
 
-Use it when the user reports a spike, an unexpected bill, an anomaly alert, or "why did cost jump." Confirm/quantify the anomaly first (`scan_anomaly_alerts`, `scan_cost_trend`, `cost-anomaly-detection.kql`), then drill here. For *setting up* detection/alerts, use `forecasting-budgeting` or the `azure-cost-management` anomaly-alerts skill instead.
+Use it when the user reports a spike, an unexpected bill, an anomaly alert, or "why did cost jump." Confirm/quantify the anomaly first (`run_scan` with `anomaly_alerts`, `run_scan` with `cost_trend`, `cost-anomaly-detection.kql`), then drill here. For *setting up* detection/alerts, use `forecasting-budgeting` or the `azure-cost-management` anomaly-alerts skill instead.
 
 ## Root-cause drill-down
 
@@ -33,7 +33,7 @@ Narrow the spike one dimension at a time until a single driver remains:
 |-----------|--------------|
 | Step up on a specific day, one resource | Scale-up, SKU change, or tier upgrade — check Activity Log |
 | Gradual ramp across many resources | Organic growth or a rollout — usually expected |
-| Spike with no usage change | A reservation/savings plan expired → rate went to on-demand (check ESR, `scan_commitment_utilization`) |
+| Spike with no usage change | A reservation/savings plan expired → rate went to on-demand (check ESR, `run_scan` with `commitment_utilization`) |
 | New resource type appears | Net-new deployment, possibly untagged/unowned |
 | Data-transfer / egress jump | Cross-region traffic, new integration, data exfil pattern — investigate |
 | Spike then return to baseline | One-off job, batch run, or test left running |
@@ -45,7 +45,7 @@ For each confirmed anomaly deliver: **driver** (the specific resource/change), *
 
 ## Hand-offs
 
-- Confirm/quantify the anomaly → `finops-multitool` (`scan_anomaly_alerts`, `scan_cost_trend`).
+- Confirm/quantify the anomaly → `finops-multitool` (`run_scan` with `anomaly_alerts`, `run_scan` with `cost_trend`).
 - Spike caused by expired commitment → `rate-optimization-portfolio`.
 - Prevent recurrence → `forecasting-budgeting` (alerts) or `azure-policy-governance` (guardrails).
 - Report it → `finops-reporting`.

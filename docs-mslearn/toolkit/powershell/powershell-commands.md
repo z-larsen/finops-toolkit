@@ -3,7 +3,7 @@ title: FinOps toolkit PowerShell module
 description: Automate and scale your FinOps efforts using the FinOps toolkit PowerShell module, which includes commands to manage FinOps solutions.
 author: flanakin
 ms.author: micflan
-ms.date: 07/02/2026
+ms.date: 08/19/2026
 ms.topic: reference
 ms.service: finops
 ms.subservice: finops-toolkit
@@ -62,6 +62,7 @@ The FinOps toolkit PowerShell module includes commands to manage FinOps solution
 ### FinOps multitool commands
 
 - [Start-FinOpsMultitool](multitool/Start-FinOpsMultitool.md) – Launch the interactive FinOps multitool terminal UI to scan for cost, governance, and optimization insights.
+- [Start-FinOpsMcpServer](multitool/Start-FinOpsMcpServer.md) – Start the FinOps multitool Model Context Protocol server so an AI agent can run the scans.
 
 ### FinOps hubs commands
 

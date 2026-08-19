@@ -28,9 +28,9 @@ Use it when the user asks for a summary, executive report, monthly/quarterly rev
 ## Executive summary structure
 
 1. **Headline** — total spend, MoM/QoQ change %, one sentence on why.
-2. **Trend** — are we accelerating, flat, or declining? (`scan_cost_trend`, `monthly-cost-trend.kql`)
+2. **Trend** — are we accelerating, flat, or declining? (`run_scan` with `cost_trend`, `monthly-cost-trend.kql`)
 3. **Top movers** — the 3 services/resource groups driving the change.
-4. **Savings captured** — ESR and realized savings (`scan_savings_realized`, `savings-summary-report.kql`).
+4. **Savings captured** — ESR and realized savings (`run_scan` with `savings_realized`, `savings-summary-report.kql`).
 5. **Opportunities** — top 3 unrealized savings, each with $ impact, effort, and owner.
 6. **Anomalies / risks** — anything unusual, expiring commitments, budget overruns.
 7. **Recommended actions** — numbered, owned, with a target date. This is the part executives read.

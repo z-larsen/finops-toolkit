@@ -17,6 +17,13 @@
     "azure-mcp-server": {
       "command": "npx",
       "args": ["-y", "@azure/mcp@latest", "server", "start", "--namespace", "kusto", "--read-only"]
+    },
+    "finops-multitool": {
+      "command": "pwsh",
+      "args": ["-NoProfile", "-Command", "Start-FinOpsMcpServer"],
+      "env": {
+        "FINOPS_WRITE_MODE": "ReadOnly"
+      }
     }
   },
   "outputStyles": "./output-styles/"

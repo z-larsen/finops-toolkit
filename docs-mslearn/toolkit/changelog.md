@@ -3,7 +3,7 @@ title: FinOps toolkit changelog
 description: Review the latest features and enhancements in the FinOps toolkit, including updates to FinOps hubs, Power BI reports, and more.
 author: MSBrett
 ms.author: brettwil
-ms.date: 07/02/2026
+ms.date: 08/19/2026
 ms.topic: reference
 ms.service: finops
 ms.subservice: finops-toolkit
@@ -37,7 +37,7 @@ The following section lists features and enhancements that are currently in deve
 - **Added**
   - Added the FinOps multitool, which scans an Azure environment for cost optimization, governance, and FinOps insights through a cross-platform terminal UI and an MCP server for AI agents ([#2155](https://github.com/microsoft/finops-toolkit/pull/2155)).
     - Includes 30 read-only scan modules covering orphaned resources, idle VMs, storage tier advice, Azure Hybrid Benefit, tag and policy inventory and recommendations, cost data, cost trend, cost by tag, resource costs, reservation advice, commitment utilization, realized savings, budget status, anomaly alerts, Advisor recommendations, billing structure, and contract info.
-    - The MCP server exposes 40 tools (36 read-only and 4 gated write/remediation) over the Model Context Protocol, with a configurable write-safety policy that defaults to read-only.
+    - The MCP server exposes 13 tools over the Model Context Protocol, following the same command-router pattern as the Azure MCP server: `run_scan` and `run_cost_scan` take the scan name as an argument, `remediate` takes the action, and the rest are tools whose parameters genuinely differ. Writes are dry-run by default and gated by a configurable write-safety policy that defaults to read-only. Start the server with [Start-FinOpsMcpServer](powershell/multitool/Start-FinOpsMcpServer.md), which lets an MCP client launch it without a path into the module.
     - Cost scans prefer the FinOps hub's Azure Data Explorer or Microsoft Fabric Kusto database and push aggregation into the engine to scale to large environments, with a storage reader as a small-dataset fallback.
     - Added a companion set of agent skills that teach AI agents to use the server and route findings into the wider FinOps practice.
 

@@ -3,7 +3,7 @@ title: FinOps multitool commands
 description: Learn about PowerShell commands in the FinOpsToolkit module that scan an Azure environment for cost optimization, governance, and FinOps insights.
 author: z-larsen
 ms.author: zlarsen
-ms.date: 07/02/2026
+ms.date: 08/19/2026
 ms.topic: reference
 ms.service: finops
 ms.subservice: finops-toolkit
@@ -25,6 +25,7 @@ The Multitool delivers one scan engine through two interfaces:
 ## Commands
 
 - [Start-FinOpsMultitool](Start-FinOpsMultitool.md) – Launch the interactive FinOps multitool terminal UI.
+- [Start-FinOpsMcpServer](Start-FinOpsMcpServer.md) – Start the Model Context Protocol server so an AI agent can run the scans.
 
 <br>
 
@@ -59,7 +60,7 @@ If no hub is available, cost scans use the live Cost Management API.
 
 ## MCP server for AI agents
 
-`Start-McpServer.ps1` exposes the scan engine as 40 tools over the Model Context Protocol (`2024-11-05`) via stdio: 36 read-only analysis tools (including `run_full_scan` and `detect_cost_data_source`) and four write/remediation tools. The write tools are dry-run by default, gated by a configurable write-safety policy, and disabled unless the `FINOPS_WRITE_MODE` environment variable is set—the server defaults to `ReadOnly`, which blocks all writes.
+`Start-McpServer.ps1` exposes the scan engine over the Model Context Protocol (`2024-11-05`) via stdio, started with [Start-FinOpsMcpServer](Start-FinOpsMcpServer.md). It advertises 13 tools using the same command-router pattern as the Azure MCP server: `run_scan` and `run_cost_scan` take the scan name as an argument instead of being a tool each, `remediate` takes the action, and the remaining tools are the ones whose parameters genuinely differ. The write actions are dry-run by default, gated by a configurable write-safety policy, and disabled unless the `FINOPS_WRITE_MODE` environment variable is set—the server defaults to `ReadOnly`, which blocks all writes.
 
 A companion set of agent skills teaches AI agents to use the server and route findings into the wider FinOps practice. The `finops-multitool` skill acts as the hub and hands off to FinOps-adjacent skills for reporting, allocation, governance, unit economics, and more.
 

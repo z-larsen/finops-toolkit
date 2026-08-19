@@ -687,6 +687,196 @@ $resourceDefinitions = @(
 )
 
 # =====================================================================
+#  ROUTER DEFINITIONS (ADVERTISED TOOL SURFACE)
+# =====================================================================
+# $toolDefinitions above stays the internal registry: it owns dispatch,
+# categories, and permission mapping. What the client actually sees is this
+# smaller router surface, following the same command-router pattern the Azure
+# MCP server uses. Most scans share one schema and differ only in which module
+# they call, so they are routed by a value instead of a tool each.
+# Handle-ToolsCall translates a router call back to a registry tool name, so
+# every downstream code path is unchanged.
+
+$scanRoutes = [ordered]@{
+    'orphaned_resources'     = 'scan_orphaned_resources'
+    'idle_vms'               = 'scan_idle_vms'
+    'storage_tier_advice'    = 'scan_storage_tier_advice'
+    'ahb_opportunities'      = 'scan_ahb_opportunities'
+    'legacy_resources'       = 'scan_legacy_resources'
+    'tag_inventory'          = 'scan_tag_inventory'
+    'tag_recommendations'    = 'scan_tag_recommendations'
+    'policy_inventory'       = 'scan_policy_inventory'
+    'policy_recommendations' = 'scan_policy_recommendations'
+    'cost_trend'             = 'scan_cost_trend'
+    'unit_economics'         = 'scan_unit_economics'
+    'reservation_advice'     = 'scan_reservation_advice'
+    'commitment_utilization' = 'scan_commitment_utilization'
+    'savings_realized'       = 'scan_savings_realized'
+    'macc_commitment'        = 'scan_macc_commitment'
+    'budget_status'          = 'scan_budget_status'
+    'budget_history'         = 'scan_budget_history'
+    'anomaly_alerts'         = 'scan_anomaly_alerts'
+    'optimization_advice'    = 'scan_optimization_advice'
+    'carbon'                 = 'scan_carbon'
+    'billing_structure'      = 'scan_billing_structure'
+    'contract_info'          = 'scan_contract_info'
+}
+
+$costScanRoutes = [ordered]@{
+    'cost_data'      = 'scan_cost_data'
+    'resource_costs' = 'scan_resource_costs'
+    'cost_by_tag'    = 'scan_cost_by_tag'
+    'ai_workloads'   = 'scan_ai_workloads'
+}
+
+$remediateRoutes = [ordered]@{
+    'delete_orphaned_resource' = 'remediate_delete_orphaned_resource'
+    'deallocate_vm'            = 'remediate_deallocate_vm'
+    'enable_hybrid_benefit'    = 'remediate_enable_hybrid_benefit'
+}
+
+$powerBiRoutes = [ordered]@{
+    'generate_template' = 'generate_powerbi_template'
+    'connect_to_hub'    = 'connect_powerbi_to_hub'
+}
+
+# Tools whose parameters are genuinely distinct stay advertised as themselves.
+$standaloneTools = @(
+    'run_full_scan'
+    'detect_cost_data_source'
+    'get_azure_context'
+    'explore_finops_kpis'
+    'scan_billing_account'
+    'scan_vm_cost_breakdown'
+    'scan_allocate_shared_cost'
+    'scan_usage_allocation'
+    'set_cost_allocation_rule'
+)
+
+$routerDefinitions = @(
+    @{
+        name        = 'run_scan'
+        routeKey    = 'scan'
+        routes      = $scanRoutes
+        description = @'
+Run ONE read-only FinOps scan against the current Azure context and return structured findings. Pick the scan that matches the question:
+OPTIMIZATION - orphaned_resources (unattached disks/NICs/public IPs, deallocated VMs still billing), idle_vms (<5% CPU), storage_tier_advice (Hot->Cool/Cold/Archive), ahb_opportunities (Windows/SQL not using Azure Hybrid Benefit), legacy_resources (retiring SKUs/API versions).
+GOVERNANCE - tag_inventory (tag coverage, untagged resources), tag_recommendations (CAF gaps, casing, duplicates), policy_inventory (assignments + compliance), policy_recommendations (coverage gaps + suggested guardrails).
+COST - cost_trend (month over month), unit_economics (cost per business unit).
+COMMITMENTS - reservation_advice (RI/savings plan purchase recommendations, de-duplicated), commitment_utilization (are existing commitments being used), savings_realized (value already delivered by RI/SP/AHB), macc_commitment (Microsoft Azure Consumption Commitment burn-down).
+MONITORING - budget_status (consumption vs thresholds), budget_history (trailing months, use monthsBack), anomaly_alerts (cost anomaly alerts + detection rules).
+ADVISOR - optimization_advice (Advisor cost recommendations with annualized savings).
+SUSTAINABILITY - carbon (emissions).
+ACCOUNT - billing_structure (EA/MCA/CSP hierarchy), contract_info (agreement, offer, currency, support plan).
+For spend totals, top resources by cost, or cost split by tag use run_cost_scan. For a full assessment use run_full_scan.
+'@
+        inputSchema = @{
+            type       = 'object'
+            properties = @{
+                scan           = @{ type = 'string'; enum = @($scanRoutes.Keys); description = 'Which scan to run.' }
+                subscriptionId = @{ type = 'string'; description = 'Target subscription ID. If omitted, scans all accessible subscriptions in the active tenant.' }
+                monthsBack     = @{ type = 'number'; description = 'Only used by budget_history. Number of trailing months to return.' }
+            }
+            required   = @('scan')
+        }
+    }
+    @{
+        name        = 'run_cost_scan'
+        routeKey    = 'scan'
+        routes      = $costScanRoutes
+        description = @'
+Run ONE cost-family scan that can read from a FinOps hub instead of the live Cost Management API. Scans: cost_data (current month actual + forecast), resource_costs (top resources by cost), cost_by_tag (cost split by tag key/value - run run_scan with tag_inventory first to see which tags exist), ai_workloads (Azure AI/OpenAI spend). Call detect_cost_data_source first to see which data path covers the scope and how fresh it is.
+'@
+        inputSchema = @{
+            type       = 'object'
+            properties = @{
+                scan            = @{ type = 'string'; enum = @($costScanRoutes.Keys); description = 'Which cost scan to run.' }
+                subscriptionId  = @{ type = 'string'; description = 'Target subscription ID. If omitted, scans all accessible subscriptions.' }
+                subscriptionIds = @{ type = 'array'; items = @{ type = 'string' }; description = 'Explicit subscription subset, used to chunk large tenants for incremental progress.' }
+                dataSource      = @{ type = 'string'; enum = @('auto', 'hub', 'api'); description = "auto (default) uses a FinOps hub or Cost Management export when it covers the scope, else the live Cost Management API. 'hub' forces the export/Kusto path. 'api' skips the export." }
+            }
+            required   = @('scan')
+        }
+    }
+    @{
+        name        = 'remediate'
+        routeKey    = 'action'
+        routes      = $remediateRoutes
+        description = @'
+WRITE/MUTATING. Act on ONE resource found by a scan. Actions: delete_orphaned_resource (IRREVERSIBLE; only unattached disks, public IPs, NICs, and snapshots are ever eligible, and the resource is re-verified as still orphaned first), deallocate_vm (REVERSIBLE - start the VM to undo; disks and configuration are kept), enable_hybrid_benefit (REVERSIBLE, savings-only; pass licenseType for Linux BYOS).
+DRY-RUN by default: without apply=true nothing changes and the result is a preview plus a ConfirmationToken. ALWAYS show the user the preview and get explicit approval, THEN call again with apply=true. Writes are refused entirely unless the operator sets FINOPS_WRITE_MODE (the server defaults to ReadOnly); in Enforced mode apply=true also requires the confirmationToken from the matching preview. Never set apply=true on your own initiative, and never tell the user a change was made unless the result has Applied = true.
+'@
+        inputSchema = @{
+            type       = 'object'
+            properties = @{
+                action            = @{ type = 'string'; enum = @($remediateRoutes.Keys); description = 'Which remediation to perform.' }
+                resourceId        = @{ type = 'string'; description = 'Full ARM resource ID of the target, taken from the matching scan output.' }
+                apply             = @{ type = 'boolean'; description = 'SAFETY GATE. Default false = dry-run preview (changes nothing). Set true ONLY after the user has reviewed the preview and explicitly approved this specific change.' }
+                confirmationToken = @{ type = 'string'; description = 'Token returned by the dry-run preview. Optional in Interactive mode; required in Enforced mode. Single-use and short-lived.' }
+                licenseType       = @{ type = 'string'; description = 'Only used by enable_hybrid_benefit. Windows VMs are auto-detected; pass RHEL_BYOS or SLES_BYOS for Linux.' }
+            }
+            required   = @('action', 'resourceId')
+        }
+    }
+    @{
+        name        = 'powerbi'
+        routeKey    = 'action'
+        routes      = $powerBiRoutes
+        description = 'Power BI helpers. generate_template builds a .pbit from scan data; connect_to_hub returns the connection details for a FinOps hub so a report can query it directly.'
+        inputSchema = @{
+            type       = 'object'
+            properties = @{
+                action         = @{ type = 'string'; enum = @($powerBiRoutes.Keys); description = 'Which Power BI helper to run.' }
+                subscriptionId = @{ type = 'string'; description = 'Target subscription ID.' }
+                outputDir      = @{ type = 'string'; description = 'Only used by generate_template. Directory to write the .pbit to.' }
+                dataSource     = @{ type = 'string'; enum = @('auto', 'hub', 'api'); description = 'Cost data source for the template.' }
+            }
+            required   = @('action')
+        }
+    }
+) + @(
+    # Distinct-parameter tools pass through from the registry unchanged.
+    $standaloneTools | ForEach-Object {
+        $n = $_
+        $def = $toolDefinitions | Where-Object { $_.name -eq $n }
+        if ($def) {
+            @{
+                name        = $def.name
+                description = $def.description
+                inputSchema = $def.inputSchema
+            }
+        }
+    }
+)
+
+# =====================================================================
+#  HELPER: RESOLVE A ROUTER CALL TO A REGISTRY TOOL
+# =====================================================================
+function Resolve-RouterCall {
+    param([string]$ToolName, [hashtable]$Arguments)
+
+    $router = $routerDefinitions | Where-Object { $_.name -eq $ToolName -and $_.routes }
+    if (-not $router) {
+        return @{ ToolName = $ToolName; Arguments = $Arguments }
+    }
+
+    $key = $router.routeKey
+    $value = if ($Arguments.ContainsKey($key)) { [string]$Arguments[$key] } else { $null }
+    if (-not $value) {
+        throw "$ToolName requires '$key'. Valid values: $(($router.routes.Keys) -join ', ')."
+    }
+    if (-not $router.routes.Contains($value)) {
+        throw "Unknown $key '$value' for $ToolName. Valid values: $(($router.routes.Keys) -join ', ')."
+    }
+
+    $forwarded = @{}
+    foreach ($k in $Arguments.Keys) {
+        if ($k -ne $key) { $forwarded[$k] = $Arguments[$k] }
+    }
+    return @{ ToolName = $router.routes[$value]; Arguments = $forwarded }
+}
+
+# =====================================================================
 #  HELPER: RESOLVE SUBSCRIPTIONS
 # =====================================================================
 function Resolve-Subscriptions {
@@ -1639,7 +1829,7 @@ function Handle-Initialize {
 
 function Handle-ToolsList {
     param([object]$Id)
-    $tools = $toolDefinitions | ForEach-Object {
+    $tools = $routerDefinitions | ForEach-Object {
         @{
             name        = $_.name
             description = $_.description
@@ -1655,6 +1845,11 @@ function Handle-ToolsCall {
     $arguments = if ($Params.arguments) { $Params.arguments } else { @{} }
 
     try {
+        # Translate the advertised router call into the registry tool it routes to.
+        $routed = Resolve-RouterCall -ToolName $toolName -Arguments $arguments
+        $toolName = $routed.ToolName
+        $arguments = $routed.Arguments
+
         # Redirect non-error streams (warning/verbose/debug/information) to
         # $null so nothing from module execution leaks onto stdout. The
         # function's return value (stream 1) still flows into $result.

@@ -15,7 +15,7 @@ Look forward, not just back. This skill projects future spend, designs budgets, 
 
 ## When to use this skill
 
-Use it when the user asks to forecast, budget, plan spend, explain why they're over/under budget, or set up budget alerts. Pull history from `scan_cost_trend` / `monthly-cost-trend.kql` and current budget state from `scan_budget_status`, then plan here.
+Use it when the user asks to forecast, budget, plan spend, explain why they're over/under budget, or set up budget alerts. Pull history from `run_scan` with `cost_trend` / `monthly-cost-trend.kql` and current budget state from `run_scan` with `budget_status`, then plan here.
 
 ## Forecasting
 
@@ -51,7 +51,7 @@ Report each driver with its $ contribution so the variance is explained, not jus
 
 ## Hand-offs
 
-- History + current budgets → `finops-multitool` (`scan_cost_trend`, `scan_budget_status`) / `finops-toolkit` KQL.
+- History + current budgets → `finops-multitool` (`run_scan` with `cost_trend`, `run_scan` with `budget_status`) / `finops-toolkit` KQL.
 - Rate-driven variance → `rate-optimization-portfolio` and `unit-economics`.
 - Sudden unexpected spike → `anomaly-investigation` skill.
 - Write up the variance → `finops-reporting`.

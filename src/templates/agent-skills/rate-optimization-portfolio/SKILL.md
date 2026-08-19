@@ -29,10 +29,10 @@ Layer them: AHB first (license), then RIs for the stable base, then a savings pl
 
 ## Portfolio workflow
 
-1. **Baseline coverage** — what % of commitment-eligible cost is already covered? (`scan_commitment_utilization`, `commitment-discount-utilization.kql`)
+1. **Baseline coverage** — what % of commitment-eligible cost is already covered? (`run_scan` with `commitment_utilization`, `commitment-discount-utilization.kql`)
 2. **Utilization** — are existing commitments fully used? Under-utilization is waste *worse than* on-demand. Fix before buying more.
 3. **Gap** — the stable, uncovered base is the buy target. Size to baseline usage, not peak — you can always add, you can't easily unwind.
-4. **Instrument choice** — RI for steady single-SKU base; savings plan for flexible compute; AHB for eligible Windows/SQL (`scan_ahb_opportunities`).
+4. **Instrument choice** — RI for steady single-SKU base; savings plan for flexible compute; AHB for eligible Windows/SQL (`run_scan` with `ahb_opportunities`).
 5. **Term** — 1-year for changing estates, 3-year for proven-stable workloads (higher discount, longer lock).
 6. **Track expirations** — model the ESR cliff when a commitment lapses; renew or re-shape ahead of expiry.
 
@@ -43,7 +43,7 @@ Layer them: AHB first (license), then RIs for the stable base, then a savings pl
 | Coverage low, utilization high | Under-committed | Buy into the stable base |
 | Utilization low | Over-committed / wrong SKU | Exchange, right-size, or let lapse — don't buy more |
 | ESR falling with no usage change | A commitment expired | Renew/re-shape (`anomaly-investigation`) |
-| AHB-eligible VMs at full rate | Leaving license savings on the table | Apply AHB (`scan_ahb_opportunities`) |
+| AHB-eligible VMs at full rate | Leaving license savings on the table | Apply AHB (`run_scan` with `ahb_opportunities`) |
 | Recommendations show large net savings | Genuine gap | Validate against baseline, then commit |
 
 ## Guardrails
